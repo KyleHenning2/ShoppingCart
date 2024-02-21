@@ -3,17 +3,17 @@ import SwiftUI
 struct ContentView: View {
     @State private var ListText: String = ""
     @State private var titleText: String = ""
-
-
+    
+    
     var body: some View {
         VStack {
             TextField("Add your list name here", text: $titleText)
                 .font(.headline)
                 .padding()
                 .textFieldStyle(.roundedBorder)
-
+            
             Divider()
-
+            
             TextEditor(text: $ListText)
                 .font(.headline)
                 .padding()
