@@ -1,6 +1,33 @@
 import SwiftUI
 
 struct ContentView: View {
+    var body: some View {
+        NavigationView {
+            HomeView()
+                .navigationBarTitle("Home")
+        }
+    }
+}
+
+struct HomeView: View {
+    var body: some View {
+        VStack {
+            NavigationLink(destination: ShoppingCartView()) {
+                Text("Shopping Cart 1")
+            }
+            .padding()
+            
+            NavigationLink(destination: ShoppingCartView()) {
+                Text("Shopping Cart 2")
+            }
+            .padding()
+            
+            // figure out a way to make it dynamic
+        }
+    }
+}
+
+struct ShoppingCartView: View {
     @State private var ListText: String = ""
     @State private var titleText: String = ""
     
@@ -24,10 +51,15 @@ struct ContentView: View {
                         .stroke(Color.gray, lineWidth: 1)
                 )
                 .padding()
+            
+            Spacer()
         }
         .padding()
         .background(Color.gray.opacity(0.1))
-        .edgesIgnoringSafeArea(.bottom)
+        .navigationBarTitle(titleText)
+        .navigationBarItems(leading: Button(action: {}, label: {
+            Text("Back")
+        }))
     }
 }
 
