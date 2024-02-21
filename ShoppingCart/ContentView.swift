@@ -2,22 +2,23 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        NavigationView {
-            HomeView()
-                .navigationBarTitle("Home")
-        }
+            NavigationStack {
+                HomeView()
+            }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle("Home")
     }
 }
 
 struct HomeView: View {
     var body: some View {
         VStack {
-            NavigationLink(destination: ShoppingCartView()) {
+            NavigationLink(destination: ShoppingCartView(title: "Shopping Cart 1")) {
                 Text("Shopping Cart 1")
             }
             .padding()
             
-            NavigationLink(destination: ShoppingCartView()) {
+            NavigationLink(destination: ShoppingCartView(title: "Shopping Cart 2")) {
                 Text("Shopping Cart 2")
             }
             .padding()
@@ -29,16 +30,11 @@ struct HomeView: View {
 
 struct ShoppingCartView: View {
     @State private var ListText: String = ""
-    @State private var titleText: String = ""
+    var title: String
     
     
     var body: some View {
         VStack {
-            TextField("Add your list name here", text: $titleText)
-                .font(.headline)
-                .padding()
-                .textFieldStyle(.roundedBorder)
-            
             Divider()
             
             TextEditor(text: $ListText)
@@ -56,10 +52,7 @@ struct ShoppingCartView: View {
         }
         .padding()
         .background(Color.gray.opacity(0.1))
-        .navigationBarTitle(titleText)
-        .navigationBarItems(leading: Button(action: {}, label: {
-            Text("Back")
-        }))
+        .navigationTitle(title)
     }
 }
 
