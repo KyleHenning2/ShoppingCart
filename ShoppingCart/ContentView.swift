@@ -16,19 +16,21 @@ struct HomeView: View {
     var body: some View {
         List {
             ForEach(cartNames.indices, id: \.self) { index in
-                NavigationLink(destination: ShoppingCartView(title: self.$cartNames[index])) {
-                    HStack {
-                        TextField("Enter Cart Name", text: self.$cartNames[index])
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding()
-                        
-                        Spacer()
-                        
+                HStack {
+                    TextField("Enter Cart Name", text: self.$cartNames[index])
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                    
+                    Spacer()
+                    
+                    NavigationLink(destination: ShoppingCartView(title: self.$cartNames[index])) {
                         Text(self.cartNames[index])
                             .padding()
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .buttonStyle(PlainButtonStyle())
+
             }
         }
         .listStyle(PlainListStyle())
