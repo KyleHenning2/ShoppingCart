@@ -1,43 +1,63 @@
-//
-//  ContentView.swift
-//  ShoppingCart
-//
-//  Created by Jennifer Henning on 2/20/24.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    @State private var ListText: String = ""
-    @State private var titleText: String = ""
-
-    
     var body: some View {
-        VStack {
-            TextField("Add your list name here", text: $titleText)
-                .font(.headline)
-                .padding()
-                .textFieldStyle(.roundedBorder)
+        TabView {
+            CartListView()
+                .tabItem {
+                    Label("Carts", systemImage: "cart")
+                }
 
-            Divider()
-            
-            TextEditor(text: $ListText)
-                .font(.headline)
-                .padding()
-                .background(Color.white)
-                .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.gray, lineWidth: 1)
-                )
-                .padding()
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
-#Preview {
-    ContentView()
+struct CartListView: View {
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(1..<4) { index in
+                    NavigationLink(destination: CartView(cartNumber: index)) {
+                        Text("Cart \(index)")
+                    }
+                }
+            }
+            .navigationTitle("Carts")
+        }
+    }
+}
+
+struct CartView: View {
+    let cartNumber: Int
+
+    var body: some View {
+        VStack {
+            Text("Cart \(cartNumber)")
+                .font(.title)
+
+            Spacer()
+
+            TextEditor(text: .constant(""))
+                .frame(minHeight: 200)
+                .padding()
+        }
+        .navigationTitle("Cart \(cartNumber)")
+    }
+}
+
+struct SettingsView: View {
+    var body: some View {
+        Text("Settings Page")
+            .navigationTitle("Settings")
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
