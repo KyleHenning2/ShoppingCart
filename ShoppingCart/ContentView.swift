@@ -1,59 +1,69 @@
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-            CartListView()
-                .tabItem {
-                    Label("Carts", systemImage: "cart")
-                }
-        }
-    }
-}
-
 struct HomeView: View {
+    @State private var carts: [Cart] = [
+        Cart(title: "Cart 1", items: []),
+        Cart(title: "Cart 2", items: [])
+    ]
+    
     var body: some View {
-        Text("Welcome to your Home")
-            .font(.title)
-    }
-}
-
-struct CartListView: View {
-    var body: some View {
-        NavigationView {
-            List {
-                ForEach(1..<4) { index in
-                    NavigationLink(destination: CartView(cartNumber: index)) {
-                        Text("Cart \(index)")
-                    }
+        VStack {
+            ForEach(carts.indices, id: \.self) { index in
+                Button(action: {
+                    self.showCart(at: index)
+                }) {
+                    Text(self.carts[index].title)
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
-            .navigationTitle("Carts")
         }
+    }
+    
+    private func showCart(at index: Int) {
+        let cartView = CartView(cart: carts[index])
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        appDelegate.window?.rootViewController = UIHostingController(rootView: cartView)
     }
 }
 
 struct CartView: View {
-    let cartNumber: Int
-
+    let cart: Cart
+    @State private var listText: String = ""
+    @State private var titleText: String = ""
+    
     var body: some View {
         VStack {
-            Text("Cart \(cartNumber)")
-                .font(.title)
-            Spacer()
-            Text("Details of Cart \(cartNumber)")
-            Spacer()
+            Text("Cart: \(cart.title)")
+                .font(.headline)
+                .padding()
+            
+            Divider()
+            
+            TextEditor(text: $listText)
+                .font(.headline)
+                .padding()
+                .background(Color.white)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
+                .padding()
         }
-        .navigationTitle("Cart \(cartNumber)")
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+struct Cart {
+    let title: String
+    var items: [String]
 }
