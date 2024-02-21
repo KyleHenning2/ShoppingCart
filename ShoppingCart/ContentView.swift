@@ -30,3 +30,7 @@ struct ContentView: View {
         .edgesIgnoringSafeArea(.bottom)
     }
 }
+
+#Preview {
+    ContentView()
+}
