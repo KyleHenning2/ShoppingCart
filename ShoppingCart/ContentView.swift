@@ -3,16 +3,22 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         TabView {
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
             CartListView()
                 .tabItem {
                     Label("Carts", systemImage: "cart")
                 }
-
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
-                }
         }
+    }
+}
+
+struct HomeView: View {
+    var body: some View {
+        Text("Welcome to your Home")
+            .font(.title)
     }
 }
 
@@ -38,21 +44,11 @@ struct CartView: View {
         VStack {
             Text("Cart \(cartNumber)")
                 .font(.title)
-
             Spacer()
-
-            TextEditor(text: .constant(""))
-                .frame(minHeight: 200)
-                .padding()
+            Text("Details of Cart \(cartNumber)")
+            Spacer()
         }
         .navigationTitle("Cart \(cartNumber)")
-    }
-}
-
-struct SettingsView: View {
-    var body: some View {
-        Text("Settings Page")
-            .navigationTitle("Settings")
     }
 }
 
