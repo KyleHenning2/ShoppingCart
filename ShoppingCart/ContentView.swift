@@ -6,7 +6,9 @@ struct ContentView: View {
                 HomeView()
             }
         .navigationTitle("Home")
+        .preferredColorScheme(.dark)
     }
+    
 }
 
 struct HomeView: View {
@@ -60,7 +62,7 @@ struct ShoppingCartView: View {
             TextEditor(text: $ListText)
                 .font(.headline)
                 .padding()
-                .background(Color.white)
+                .background(Color.black)
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
