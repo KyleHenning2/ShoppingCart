@@ -13,7 +13,7 @@ struct ContentView: View {
 struct HomeView: View {
     @State private var numberOfCarts = 2
     @State private var cartNames: [String] = ["Shopping Cart 1", "Shopping Cart 2"]
-    
+
     var body: some View {
         List {
             ForEach(cartNames.indices, id: \.self) { index in
@@ -26,7 +26,16 @@ struct HomeView: View {
                         }
                     
                     NavigationLink(destination: ShoppingCartView(title: self.$cartNames[index])) {
+                        EmptyView()
                     }
+                    
+                    Button(action: {
+                        deleteCart(at: index)
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(BorderlessButtonStyle())
                 }
             }
         }
@@ -48,7 +57,7 @@ struct HomeView: View {
             loadCartNamesFromFile()
         }
     }
-    
+
     private func loadCartNamesFromFile() {
         let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("cartNames.txt")
         do {
@@ -62,7 +71,7 @@ struct HomeView: View {
             print("Error loading cart names: \(error)")
         }
     }
-    
+
     private func saveCartNamesToFile() {
         let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("cartNames.txt")
         do {
@@ -72,7 +81,33 @@ struct HomeView: View {
             print("Error saving cart names: \(error)")
         }
     }
+
+    private func deleteCart(at index: Int) {
+        guard index >= 0 && index < cartNames.count else {
+            return
+        }
+        
+        let cartNameToDelete = cartNames[index]
+        
+        // Remove the cart name from the list
+        cartNames.remove(at: index)
+        
+        // Save the updated list
+        saveCartNamesToFile()
+        
+        // Delete the associated data file
+        let fileManager = FileManager.default
+        let fileURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(cartNameToDelete).txt")
+        
+        do {
+            try fileManager.removeItem(at: fileURL)
+        } catch {
+            print("Error deleting data file: \(error)")
+        }
+    }
+
 }
+
 
 struct ShoppingCartView: View {
     @State private var listText: String = ""
