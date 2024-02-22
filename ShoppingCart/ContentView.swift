@@ -2,13 +2,12 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-            NavigationStack {
-                HomeView()
-            }
+        NavigationStack {
+            HomeView()
+        }
         .navigationTitle("Home")
         .preferredColorScheme(.dark)
     }
-    
 }
 
 struct HomeView: View {
@@ -22,44 +21,68 @@ struct HomeView: View {
                     TextField("Enter Cart Name", text: self.$cartNames[index])
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
-                    
-                    Spacer()
+                        .onChange(of: self.cartNames[index]) { _ in
+                            saveCartNamesToFile()
+                        }
                     
                     NavigationLink(destination: ShoppingCartView(title: self.$cartNames[index])) {
-                        Text(self.cartNames[index])
-                            .padding()
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
-
             }
         }
-        .listStyle(PlainListStyle())
+        .listStyle(SidebarListStyle())
         .navigationTitle("Shopping Carts")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Button(action: {
                     self.numberOfCarts += 1
-                    self.cartNames.append("Shopping Cart \(self.numberOfCarts)")
+                    let newCartName = "Shopping Cart \(self.numberOfCarts)"
+                    self.cartNames.append(newCartName)
+                    saveCartNamesToFile()
                 }) {
                     Label("Add Shopping Cart", systemImage: "cart.badge.plus")
                 }
             }
         }
+        .onAppear {
+            loadCartNamesFromFile()
+        }
+    }
+    
+    private func loadCartNamesFromFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("cartNames.txt")
+        do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                self.cartNames = try String(contentsOf: fileURL).components(separatedBy: "\n")
+            } else {
+                // Initialize with default cart names
+                self.cartNames = ["Shopping Cart 1", "Shopping Cart 2"]
+            }
+        } catch {
+            print("Error loading cart names: \(error)")
+        }
+    }
+    
+    private func saveCartNamesToFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("cartNames.txt")
+        do {
+            let cartNamesString = cartNames.joined(separator: "\n")
+            try cartNamesString.write(to: fileURL, atomically: true, encoding: .utf8)
+        } catch {
+            print("Error saving cart names: \(error)")
+        }
     }
 }
 
 struct ShoppingCartView: View {
-    @State private var ListText: String = ""
+    @State private var listText: String = ""
     @Binding var title: String
-    
-    
+
     var body: some View {
         VStack {
             Divider()
-            
-            TextEditor(text: $ListText)
+
+            TextEditor(text: $listText)
                 .font(.headline)
                 .padding()
                 .background(Color.black)
@@ -69,12 +92,40 @@ struct ShoppingCartView: View {
                         .stroke(Color.gray, lineWidth: 1)
                 )
                 .padding()
-            
+
             Spacer()
         }
         .padding()
         .background(Color.gray.opacity(0.1))
         .navigationTitle(title)
+        .onAppear {
+            loadTextFromFile()
+        }
+        .onDisappear {
+            saveTextToFile()
+        }
+    }
+
+    private func loadTextFromFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title).txt")
+        do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                self.listText = try String(contentsOf: fileURL)
+            } else {
+                self.listText = ""
+            }
+        } catch {
+            print("Error loading contents: \(error)")
+        }
+    }
+
+    private func saveTextToFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title).txt")
+        do {
+            try listText.write(to: fileURL, atomically: true, encoding: .utf8)
+        } catch {
+            print("Error writing contents: \(error)")
+        }
     }
 }
 
