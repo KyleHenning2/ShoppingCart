@@ -28,10 +28,6 @@ struct HomeView: View {
                         .onChange(of: self.cartNames[index]) { _ in
                             saveCartNamesToFile()
                         }
-                        .onTapGesture {
-                            // Enable clicking on the title to edit it
-                            editCartName(at: index)
-                        }
 
                     Spacer() // Add spacer to push NavigationLink to the edge
 
@@ -118,21 +114,35 @@ struct HomeView: View {
             }
         }
     }
-
-    // handles editing the name of a cart
-    private func editCartName(at index: Int) {
-        // To be implemented
-    }
 }
 
 // Shopping Cart Page
 struct ShoppingCartView: View {
     @State private var listText: String = ""
     @Binding var title: String
+    @State private var selectedSortingMethod: SortingMethod = .none
+
+    enum SortingMethod: String, CaseIterable {
+        case none = "None"
+        case alphabetical = "Alphabetical"
+    }
 
     var body: some View {
         VStack {
             Divider()
+            
+            // Add a picker to select sorting method
+            Picker("Sort By", selection: $selectedSortingMethod) {
+                ForEach(SortingMethod.allCases, id: \.self) { method in
+                    Text(method.rawValue)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding()
+            .onChange(of: selectedSortingMethod) { _ in
+                applySortingMethod()
+            } // Apply sorting when the selection changes
+            
             // The main text editor for the shopping cart
             TextEditor(text: $listText)
                 .font(.body) // Adjust font size
@@ -161,6 +171,23 @@ struct ShoppingCartView: View {
         }
     }
 
+    // Method to apply the selected sorting method
+    private func applySortingMethod() {
+        switch selectedSortingMethod {
+        case .none:
+            // Do nothing
+            break
+        case .alphabetical:
+            sortListTextAlphabetically()
+        }
+    }
+
+    // Method to sort the text lines alphabetically
+    private func sortListTextAlphabetically() {
+        let lines = listText.components(separatedBy: "\n").sorted()
+        listText = lines.joined(separator: "\n")
+    }
+
     // loads the text from its file
     private func loadTextFromFile() {
         let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title).txt")
@@ -185,6 +212,7 @@ struct ShoppingCartView: View {
         }
     }
 }
+
 
 #Preview {
     ContentView()
