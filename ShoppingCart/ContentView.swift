@@ -10,6 +10,11 @@ struct ContentView: View {
     }
 }
 
+struct GroceryItem {
+    var name: String
+    var aisle: String
+}
+
 // Home page
 struct HomeView: View {
     // Starting Carts
@@ -125,6 +130,7 @@ struct ShoppingCartView: View {
     enum SortingMethod: String, CaseIterable {
         case none = "None"
         case alphabetical = "Alphabetical"
+        case byAisle = "By Aisle"
     }
 
     var body: some View {
@@ -179,7 +185,55 @@ struct ShoppingCartView: View {
             break
         case .alphabetical:
             sortListTextAlphabetically()
+        case .byAisle:
+            sortByAisle()
         }
+    }
+    
+    private func sortByAisle() {
+        // Define keywords associated with aisles
+        let aisleKeywords: [String: String] = [
+            "milk": "Dairy",
+            "cheese": "Dairy",
+            "bread": "Bakery",
+            "apples": "Produce",
+            "cereal": "Breakfast",
+            "pasta": "Pasta",
+            "jalapenos": "Produce"
+        ]
+
+        // Create a dictionary to group items by aisle
+        var itemsByAisle: [String: [String]] = [:]
+
+        // Iterate through the lines of the list text
+        for line in listText.components(separatedBy: "\n") {
+            var foundAisle: String? = nil
+
+            // Check each keyword against the line
+            for (keyword, aisle) in aisleKeywords {
+                if line.lowercased().contains(keyword) {
+                    foundAisle = aisle
+                    break
+                }
+            }
+
+            // If a keyword is found, associate it with the corresponding aisle
+            if let aisle = foundAisle {
+                if itemsByAisle[aisle] == nil {
+                    itemsByAisle[aisle] = []
+                }
+                itemsByAisle[aisle]?.append(line)
+            }
+        }
+
+        // Construct the sorted text with items grouped by aisle
+        var sortedText = ""
+        for (aisle, items) in itemsByAisle {
+            sortedText += items.joined(separator: "\n") + "\n"
+        }
+
+        // Update the listText
+        listText = sortedText
     }
 
     // Method to sort the text lines alphabetically
