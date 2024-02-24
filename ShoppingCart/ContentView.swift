@@ -135,20 +135,34 @@ struct ShoppingCartView: View {
     @Binding var title: String
     @State private var items: [ShoppingCartItem] = []
     @State private var newItem: String = ""
+    @State private var isToggled: [Bool] = [] // Track toggled state for each item
 
     var body: some View {
         VStack {
             Divider()
-            
+
             // List of items
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(items.indices, id: \.self) { index in
+                    ForEach(items.indices.sorted { (firstIndex, secondIndex) -> Bool in
+                        if !isToggled[firstIndex] && isToggled[secondIndex] {
+                            return false // Move toggled off items down
+                        } else if isToggled[firstIndex] && !isToggled[secondIndex] {
+                            return true // Keep toggled on items at the current position
+                        } else {
+                            return firstIndex < secondIndex // Maintain the relative order of toggled on items
+                        }
+                    }, id: \.self) { index in
                         HStack {
-                            if index != items.indices.last { // Check if the current index is not the last index
+                            if index != items.indices.last && !items.isEmpty {
+                                Toggle("", isOn: $isToggled[index])
+                                    .labelsHidden()
+                            }
+                            
+                            if index != items.indices.last && !items.isEmpty {
                                 Button(action: {
-                                    // Remove the item when tapping the minus button
                                     items.remove(at: index)
+                                    isToggled.remove(at: index)
                                 }) {
                                     Image(systemName: "minus.circle.fill")
                                         .foregroundColor(.red)
@@ -158,18 +172,18 @@ struct ShoppingCartView: View {
                             
                             TextField("Add Item", text: $items[index].item, onCommit: {
                                 if index == items.count - 1 {
-                                    // Add new item below current one when hitting Enter on last item
                                     let newItem = ShoppingCartItem(item: "")
                                     items.append(newItem)
+                                    isToggled.append(true)
                                 }
                             })
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             
-                            if index != items.indices.last { // Check if the current index is not the last index
+                            if index != items.indices.last && !items.isEmpty && isToggled[index] {
                                 Button(action: {
-                                    // Add new item below current one when tapping the plus button
                                     let newItem = ShoppingCartItem(item: "")
                                     items.insert(newItem, at: index + 1)
+                                    isToggled.insert(true, at: index + 1)
                                 }) {
                                     Image(systemName: "plus.circle.fill")
                                         .foregroundColor(.blue)
@@ -180,8 +194,6 @@ struct ShoppingCartView: View {
                 }
                 .padding()
             }
-
-            Spacer()
         }
         .padding()
         .background(Color.gray.opacity(0.1))
@@ -199,11 +211,11 @@ struct ShoppingCartView: View {
             if let lastItem = items.last, !lastItem.item.isEmpty {
                 let newItem = ShoppingCartItem(item: "")
                 items.append(newItem)
+                isToggled.append(true) // Add new toggle state for the new item
             }
         })
     }
 
-    // Load items from file
     // Load items from file
     private func loadItemsFromFile() {
         let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title)_items.txt")
@@ -213,19 +225,21 @@ struct ShoppingCartView: View {
                 if savedItems.isEmpty {
                     // If there are no items in the file, initialize with one empty item
                     self.items = [ShoppingCartItem(item: "")]
+                    self.isToggled = [true] // Initialize toggle state for the single item
                 } else {
                     // Otherwise, load the saved items from the file
                     self.items = savedItems.map { ShoppingCartItem(item: $0) }
+                    self.isToggled = Array(repeating: true, count: savedItems.count) // Initialize toggle states for loaded items
                 }
             } else {
                 // If the file does not exist, initialize with one empty item
                 self.items = [ShoppingCartItem(item: "")]
+                self.isToggled = [true] // Initialize toggle state for the single item
             }
         } catch {
             print("Error loading items: \(error)")
         }
     }
-
 
     // Save items to file
     private func saveItemsToFile() {
