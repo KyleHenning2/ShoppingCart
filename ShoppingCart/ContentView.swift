@@ -15,6 +15,15 @@ struct GroceryItem {
     var aisle: String
 }
 
+struct ShoppingCartItem: Identifiable, Equatable {
+    let id = UUID()
+    var item: String
+    
+    static func == (lhs: ShoppingCartItem, rhs: ShoppingCartItem) -> Bool {
+        return lhs.item == rhs.item
+    }
+}
+
 // Home page
 struct HomeView: View {
     // Starting Carts
@@ -123,150 +132,112 @@ struct HomeView: View {
 
 // Shopping Cart Page
 struct ShoppingCartView: View {
-    @State private var listText: String = ""
     @Binding var title: String
-    @State private var selectedSortingMethod: SortingMethod = .none
-
-    enum SortingMethod: String, CaseIterable {
-        case none = "None"
-        case alphabetical = "Alphabetical"
-        case byAisle = "By Aisle"
-    }
+    @State private var items: [ShoppingCartItem] = []
+    @State private var newItem: String = ""
 
     var body: some View {
         VStack {
             Divider()
             
-            // Add a picker to select sorting method
-            Picker("Sort By", selection: $selectedSortingMethod) {
-                ForEach(SortingMethod.allCases, id: \.self) { method in
-                    Text(method.rawValue)
+            // List of items
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(items.indices, id: \.self) { index in
+                        HStack {
+                            if index != items.indices.last { // Check if the current index is not the last index
+                                Button(action: {
+                                    // Remove the item when tapping the minus button
+                                    items.remove(at: index)
+                                }) {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundColor(.red)
+                                }
+                                .padding(.trailing, 8)
+                            }
+                            
+                            TextField("Add Item", text: $items[index].item, onCommit: {
+                                if index == items.count - 1 {
+                                    // Add new item below current one when hitting Enter on last item
+                                    let newItem = ShoppingCartItem(item: "")
+                                    items.append(newItem)
+                                }
+                            })
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            
+                            if index != items.indices.last { // Check if the current index is not the last index
+                                Button(action: {
+                                    // Add new item below current one when tapping the plus button
+                                    let newItem = ShoppingCartItem(item: "")
+                                    items.insert(newItem, at: index + 1)
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                    }
                 }
+                .padding()
             }
-            .pickerStyle(MenuPickerStyle())
-            .padding()
-            .onChange(of: selectedSortingMethod) { _ in
-                applySortingMethod()
-            } // Apply sorting when the selection changes
-            
-            // The main text editor for the shopping cart
-            TextEditor(text: $listText)
-                .font(.body) // Adjust font size
-                .frame(minHeight: 200) // Set minimum height
-                .padding()
-                .background(Color.black)
-                .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.gray, lineWidth: 1)
-                )
-                .padding()
 
             Spacer()
         }
         .padding()
         .background(Color.gray.opacity(0.1))
         .navigationTitle(title)
-        // loads the text to the file for cart
+        // Load items from file
         .onAppear {
-            loadTextFromFile()
+            loadItemsFromFile()
         }
-        // saves the text to the file for cart
+        // Save items to file
         .onDisappear {
-            saveTextToFile()
+            saveItemsToFile()
         }
-    }
-
-    // Method to apply the selected sorting method
-    private func applySortingMethod() {
-        switch selectedSortingMethod {
-        case .none:
-            // Do nothing
-            break
-        case .alphabetical:
-            sortListTextAlphabetically()
-        case .byAisle:
-            sortByAisle()
-        }
-    }
-    
-    private func sortByAisle() {
-        // Define keywords associated with aisles
-        let aisleKeywords: [String: String] = [
-            "milk": "Dairy",
-            "cheese": "Dairy",
-            "bread": "Bakery",
-            "apples": "Produce",
-            "cereal": "Breakfast",
-            "pasta": "Pasta",
-            "jalapenos": "Produce"
-        ]
-
-        // Create a dictionary to group items by aisle
-        var itemsByAisle: [String: [String]] = [:]
-
-        // Iterate through the lines of the list text
-        for line in listText.components(separatedBy: "\n") {
-            var foundAisle: String? = nil
-
-            // Check each keyword against the line
-            for (keyword, aisle) in aisleKeywords {
-                if line.lowercased().contains(keyword) {
-                    foundAisle = aisle
-                    break
-                }
+        // Ensure there is always an empty item at the end of the list
+        .onChange(of: items, perform: { _ in
+            if let lastItem = items.last, !lastItem.item.isEmpty {
+                let newItem = ShoppingCartItem(item: "")
+                items.append(newItem)
             }
-
-            // If a keyword is found, associate it with the corresponding aisle
-            if let aisle = foundAisle {
-                if itemsByAisle[aisle] == nil {
-                    itemsByAisle[aisle] = []
-                }
-                itemsByAisle[aisle]?.append(line)
-            }
-        }
-
-        // Construct the sorted text with items grouped by aisle
-        var sortedText = ""
-        for (aisle, items) in itemsByAisle {
-            sortedText += items.joined(separator: "\n") + "\n"
-        }
-
-        // Update the listText
-        listText = sortedText
+        })
     }
 
-    // Method to sort the text lines alphabetically
-    private func sortListTextAlphabetically() {
-        let lines = listText.components(separatedBy: "\n").sorted()
-        listText = lines.joined(separator: "\n")
-    }
-
-    // loads the text from its file
-    private func loadTextFromFile() {
-        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title).txt")
+    // Load items from file
+    // Load items from file
+    private func loadItemsFromFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title)_items.txt")
         do {
             if FileManager.default.fileExists(atPath: fileURL.path) {
-                self.listText = try String(contentsOf: fileURL)
+                let savedItems = try String(contentsOf: fileURL).components(separatedBy: "\n").filter { !$0.isEmpty }
+                if savedItems.isEmpty {
+                    // If there are no items in the file, initialize with one empty item
+                    self.items = [ShoppingCartItem(item: "")]
+                } else {
+                    // Otherwise, load the saved items from the file
+                    self.items = savedItems.map { ShoppingCartItem(item: $0) }
+                }
             } else {
-                self.listText = ""
+                // If the file does not exist, initialize with one empty item
+                self.items = [ShoppingCartItem(item: "")]
             }
         } catch {
-            print("Error loading contents: \(error)")
+            print("Error loading items: \(error)")
         }
     }
 
-    // saves the text into its file
-    private func saveTextToFile() {
-        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title).txt")
+
+    // Save items to file
+    private func saveItemsToFile() {
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("\(title)_items.txt")
         do {
-            try listText.write(to: fileURL, atomically: true, encoding: .utf8)
+            let itemsString = items.map { $0.item }.joined(separator: "\n")
+            try itemsString.write(to: fileURL, atomically: true, encoding: .utf8)
         } catch {
-            print("Error writing contents: \(error)")
+            print("Error saving items: \(error)")
         }
     }
 }
-
 
 #Preview {
     ContentView()
