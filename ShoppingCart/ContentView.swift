@@ -153,6 +153,12 @@ struct ShoppingCartView: View {
                             return firstIndex < secondIndex // Maintain the relative order of toggled on items
                         }
                     }, id: \.self) { index in
+                        // Check if we need to insert a spacer before the current item
+                        if index == items.indices.first(where: { !isToggled[$0] }) {
+                            Spacer(minLength: 20)
+                            Divider()
+                        }
+                        
                         HStack {
                             if index != items.indices.last && !items.isEmpty {
                                 Toggle("", isOn: $isToggled[index])
